@@ -4,6 +4,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Infrastructure;
+using System.Diagnostics;
+using System.Reflection;
 
 namespace Kudu.Core.Deployment
 {
@@ -27,6 +29,27 @@ namespace Kudu.Core.Deployment
             string buildTempPath = Path.Combine(_tempPath, Guid.NewGuid().ToString());
 
             ILogger buildLogger = context.Logger.Log(Resources.Log_BuildingWebProject, Path.GetFileName(_projectPath));
+
+            string appNuGetExePath = Path.Combine(Path.GetDirectoryName(_solutionPath), ".nuget", "nuget.exe");
+            if (File.Exists(appNuGetExePath))
+            {
+                var fviApp = FileVersionInfo.GetVersionInfo(appNuGetExePath);
+                var appNuGetExeVersion = new Version(fviApp.ProductVersion);
+
+                string kuduNuGetExePath = Path.Combine(
+                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                    "nuget.exe");
+                if (File.Exists(kuduNuGetExePath))
+                {
+                    var fviKudu = FileVersionInfo.GetVersionInfo(kuduNuGetExePath);
+                    var kuduNuGetExeVersion = new Version(fviKudu.ProductVersion);
+
+                    if (kuduNuGetExeVersion > appNuGetExeVersion)
+                    {
+                        File.Copy(kuduNuGetExePath, appNuGetExePath, overwrite: true);
+                    }
+                }
+            }
 
             try
             {
