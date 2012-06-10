@@ -176,6 +176,14 @@ namespace Kudu.Core.SourceControl.Git
         {
             ITracer tracer = _tracerFactory.GetTracer();
             _gitExe.Execute(tracer, "checkout {0} --force", id);
+
+			UpdateSubmodules();
+        }
+
+        public void UpdateSubmodules()
+        {
+            ITracer tracer = _tracerFactory.GetTracer();
+            _gitExe.Execute(tracer, "submodule update --init --recursive");
         }
 
         public void Update()
